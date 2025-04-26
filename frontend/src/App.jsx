@@ -8,7 +8,9 @@ import Sidebar from "./components/SideBar";
 
 import "react-toastify/dist/ReactToastify.css";
 
-const server = "http://localhost:5000";
+// const server = "http://localhost:5000";
+const server = import.meta.env.VITE_BACKEND_URL;
+
 const connectionOptions = {
   "force new connection": true,
   reconnectionAttempts: "Infinity",

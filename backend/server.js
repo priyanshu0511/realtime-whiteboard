@@ -2,12 +2,20 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const { userJoin, getUsers, userLeave } = require("./utils/users");
+const socketIO = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const socketIO = require("socket.io");
-const io = socketIO(server);
 
+// 👉 Fix: Setup socket.io with CORS options
+const io = socketIO(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+// Middleware
 app.use(cors());
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -18,22 +26,28 @@ app.use((req, res, next) => {
   next();
 });
 
+// Routes
 app.get("/", (req, res) => {
-  res.send("server");
+  res.send("server is running 🚀");
 });
 
-// socket.io
+// Socket.io connection
 let imageUrl, userRoom;
+
 io.on("connection", (socket) => {
   socket.on("user-joined", (data) => {
     const { roomId, userId, userName, host, presenter } = data;
     userRoom = roomId;
+
     const user = userJoin(socket.id, userName, roomId, host, presenter);
     const roomUsers = getUsers(user.room);
+
     socket.join(user.room);
+
     socket.emit("message", {
       message: "Welcome to ChatRoom",
     });
+
     socket.broadcast.to(user.room).emit("message", {
       message: `${user.username} has joined`,
     });
@@ -60,9 +74,9 @@ io.on("connection", (socket) => {
   });
 });
 
-// serve on port
+// Server listen
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () =>
-  console.log(`server is listening on http://localhost:${PORT}`)
-);
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
